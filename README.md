@@ -1,1 +1,1 @@
-#Legal-ease(AI Contract Analyzer)
+# Legal-ease(AI Contract Analyzer)
