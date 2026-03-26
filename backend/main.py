@@ -17,23 +17,15 @@ from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.piecharts import Pie
 import io, json, os
 from google import genai
-from google.genai import errors as genai_errors, types
 
 # ── Environment ---------------------------------------------------------------
 load_dotenv()
-
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
-GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash").strip()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 SECRET_API_KEY = os.getenv("SECRET_API_KEY", "").strip()
 
 
-def get_gemini_client() -> genai.Client:
-    if not GOOGLE_API_KEY:
-        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not set.")
-    return genai.Client(api_key=GOOGLE_API_KEY)
-
 # ── App -----------------------------------------------------------------------
-app = FastAPI(title="Legal-Ease API", version="2.0")
+app = FastAPI(title="AI Contract Analyzer API", version="2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -96,29 +88,29 @@ class ReportRequest(BaseModel):
 
 # ── Gemini helper -------------------------------------------------------------
 def call_gemini(prompt: str, temperature: float = 0.2) -> str:
-    client = get_gemini_client()
     try:
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
         response = client.models.generate_content(
-            model=GOOGLE_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=temperature,
-                max_output_tokens=8192,
-            )
+            model="gemini-1.5-flash",
+            contents=prompt
         )
+
+        if not response.text:
+            raise Exception("Empty response from Gemini")
+
         return response.text
-    except genai_errors.ClientError as e:
-        if e.status_code == 429:
+
+    except Exception as e:
+        error_str = str(e)
+
+        if "quota" in error_str.lower() or "429" in error_str:
             raise HTTPException(
                 status_code=429,
-                detail="Gemini quota exceeded. Retry later or check billing/quota for the configured API key."
-            ) from e
-        if e.status_code == 403:
-            raise HTTPException(
-                status_code=403,
-                detail="Gemini API key is not authorized for this request. Check API key restrictions and project setup."
-            ) from e
-        raise HTTPException(status_code=502, detail=f"Gemini request failed: {e}") from e
+                detail="Gemini quota exceeded. Try a new API key."
+            )
+
+        raise HTTPException(status_code=500, detail=error_str)
 
 
 # ── PDF text extractor -------------------------------------------------------
@@ -134,10 +126,10 @@ def extract_pdf_text(content: bytes) -> str:
 @app.get("/")
 def root():
     return {
-        "service": "Legal-Ease API",
+        "service": "AI Contract Analyzer API",
         "status": "running",
-        "gemini_configured": bool(GOOGLE_API_KEY),
-        "gemini_model": GOOGLE_MODEL,
+        "gemini_configured": bool(GEMINI_API_KEY),
+        "gemini_model": "gemini-1.5-flash",
         "note": "Frontend handles all PII masking. Backend does AI analysis only."
     }
 
@@ -145,16 +137,14 @@ def root():
 # ── /analyze ------------------------------------------------------------------
 @app.post("/analyze")
 async def analyze(
-        file: UploadFile = File(...),
-        language: str = Form(...),
-        _key: str = Depends(verify_key),
+    file: UploadFile = File(...),
+    language: str = Form(...),
+    _key: str = Depends(verify_key),
 ):
-    """
-    Receives ALREADY-MASKED contract text from the React frontend.
-    Runs a lawyer-grade Gemini analysis and returns structured JSON.
-    """
+
     # 1. Read file
     content = await file.read()
+
     if file.filename.lower().endswith(".pdf"):
         contract_text = extract_pdf_text(content)
     else:
@@ -165,7 +155,7 @@ async def analyze(
 
     lang_name = LANG_MAP.get(language, "Hindi")
 
-    # 2. Lawyer-grade prompt
+    # 2. Prompt
     prompt = f"""You are a highly experienced Indian contract lawyer with 20+ years of practice.
 You specialize in commercial contracts, service agreements, vendor contracts, employment bonds,
 and rental agreements for small and medium businesses in India.
@@ -249,49 +239,34 @@ CONTRACT TEXT (PII already masked by frontend):
 RESPOND WITH ONLY THE JSON OBJECT."""
 
     # 3. Call Gemini
-    try:
-        raw = call_gemini(prompt, temperature=0.1)
-        # Strip markdown fences if Gemini adds them
-        clean = raw.replace("```json", "").replace("```", "").strip()
-        # Extract JSON object
-        start = clean.find("{")
-        end = clean.rfind("}") + 1
-        if start == -1 or end == 0:
-            raise ValueError("No JSON found in Gemini response")
-        result = json.loads(clean[start:end])
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Gemini returned invalid JSON: {str(e)}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    raw = call_gemini(prompt)
 
-    # 4. Return structured response
+    if not raw:
+        raise HTTPException(status_code=500, detail="Gemini returned empty response")
+
+    # 4. Clean JSON
+    clean = raw.replace("```json", "").replace("```", "").strip()
+
+    start = clean.find("{")
+    end = clean.rfind("}") + 1
+
+    if start == -1 or end == 0:
+        raise HTTPException(status_code=500, detail="No JSON found")
+
+    result = json.loads(clean[start:end])
+
+    # 5. Return
     return {
         "summary": result.get("summary", ""),
         "legalOpinion": result.get("legalOpinion", ""),
         "overallRisk": result.get("overallRisk", "Low"),
         "keyParties": result.get("keyParties", ""),
         "redFlags": result.get("redFlags", []),
-        "clauses": [
-            {
-                "id": c.get("id", i + 1),
-                "title": c.get("title", ""),
-                "original": c.get("original", ""),
-                "simplified": c.get("simplified", ""),
-                "legalAnalysis": c.get("legalAnalysis", ""),
-                "risk": c.get("risk", "Low"),
-                "warning": c.get("warning", ""),
-                "recommendation": c.get("recommendation", ""),
-                "type": c.get("type", "general"),
-            }
-            for i, c in enumerate(result.get("clauses", []))
-        ],
+        "clauses": result.get("clauses", []),
         "recommendations": result.get("recommendations", []),
         "missingClauses": result.get("missingClauses", []),
         "negotiationPriority": result.get("negotiationPriority", "Medium"),
         "signingAdvice": result.get("signingAdvice", ""),
-        "totalClauses": len(result.get("clauses", [])),
     }
 
 
@@ -388,7 +363,7 @@ async def generate_pdf(req: ReportRequest, _key: str = Depends(verify_key)):
     story = []
 
     # ── Header ----------------------------------------------------------------
-    story.append(Paragraph("⚖️ Legal-Ease", title_s))
+    story.append(Paragraph("⚖️ AI Contract Analyzer", title_s))
     story.append(Paragraph("AI-Powered Contract Analysis Report", subtitle_s))
     story.append(HRFlowable(width="100%", thickness=1,
                             color=colors.HexColor("#E2E8F0")))
@@ -508,7 +483,7 @@ async def generate_pdf(req: ReportRequest, _key: str = Depends(verify_key)):
                             color=colors.HexColor("#E2E8F0")))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
-        "Generated by Legal-Ease AI  |  Powered by Gemini 2.0 Flash  |  "
+        "Generated by AI Contract Analyzer  |  Powered by Gemini 2.0 Flash  |  "
         "Privacy-First: PII was masked before AI processing — your real data was never exposed to AI.",
         foot_s
     ))
@@ -518,7 +493,7 @@ async def generate_pdf(req: ReportRequest, _key: str = Depends(verify_key)):
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=legal-ease-report.pdf"},
+        headers={"Content-Disposition": "attachment; filename=ai-contract-analyzer-report.pdf"},
     )
 
 
