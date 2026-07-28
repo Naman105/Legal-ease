@@ -91,14 +91,23 @@ class ReportRequest(BaseModel):
 
 
 # ── Gemini helper -------------------------------------------------------------
+
 def call_gemini(prompt: str, temperature: float = 0.2) -> str:
     try:
-        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        print("===== CALLING GEMINI =====")
+        print("Key length:", len(GEMINI_API_KEY))
+        print("Key starts with:", GEMINI_API_KEY[:6])
+
+        client = genai.Client(api_key=GEMINI_API_KEY)   
+
+        print("Client created successfully")
 
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt
         )
+
+        print("Gemini response received")
 
         if not response.text:
             raise Exception("Empty response from Gemini")
@@ -106,15 +115,10 @@ def call_gemini(prompt: str, temperature: float = 0.2) -> str:
         return response.text
 
     except Exception as e:
-        error_str = str(e)
-
-        if "quota" in error_str.lower() or "429" in error_str:
-            raise HTTPException(
-                status_code=429,
-                detail="Gemini quota exceeded. Try a new API key."
-            )
-
-        raise HTTPException(status_code=500, detail=error_str)
+        import traceback
+        print("===== GEMINI ERROR =====")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── PDF text extractor -------------------------------------------------------
