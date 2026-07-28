@@ -23,6 +23,10 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 SECRET_API_KEY = os.getenv("SECRET_API_KEY", "").strip()
 
+print("GEMINI_API_KEY length:", len(GEMINI_API_KEY))
+print("GEMINI_API_KEY starts with:", GEMINI_API_KEY[:6] if GEMINI_API_KEY else "None")
+
+
 
 # ── App -----------------------------------------------------------------------
 app = FastAPI(title="AI Contract Analyzer API", version="2.0")
