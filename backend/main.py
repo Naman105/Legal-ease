@@ -1,3 +1,4 @@
+from annotated_types import doc
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -17,6 +18,8 @@ from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.piecharts import Pie
 import io, json, os
 from google import genai
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # ── Environment ---------------------------------------------------------------
 load_dotenv()
@@ -26,6 +29,36 @@ SECRET_API_KEY = os.getenv("SECRET_API_KEY", "").strip()
 print("GEMINI_API_KEY length:", len(GEMINI_API_KEY))
 print("GEMINI_API_KEY starts with:", GEMINI_API_KEY[:6] if GEMINI_API_KEY else "None")
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FONT_DIR = os.path.join(BASE_DIR, "fonts")
+
+pdfmetrics.registerFont(
+    TTFont("Hindi", os.path.join(FONT_DIR, "NotoSansDevanagari-Regular.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("Tamil", os.path.join(FONT_DIR, "NotoSansTamil-Regular.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("Telugu", os.path.join(FONT_DIR, "NotoSansTelugu-Regular.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("Kannada", os.path.join(FONT_DIR, "NotoSansKannada-Regular.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("Gujarati", os.path.join(FONT_DIR, "NotoSansGujarati-Regular.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("Bengali", os.path.join(FONT_DIR, "NotoSansBengali-Regular.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("Punjabi", os.path.join(FONT_DIR, "NotoSansGurmukhi-Regular.ttf"))
+)
 
 
 # ── App -----------------------------------------------------------------------
@@ -311,6 +344,7 @@ Answer in {lang_name} as a helpful lawyer:"""
 
 
 # ── /generate-pdf -------------------------------------------------------------
+
 @app.post("/generate-pdf")
 async def generate_pdf(req: ReportRequest, _key: str = Depends(verify_key)):
     """
@@ -329,44 +363,113 @@ async def generate_pdf(req: ReportRequest, _key: str = Depends(verify_key)):
         topMargin=0.8 * inch, bottomMargin=0.8 * inch
     )
 
+    FONT_MAP = {
+    "hi": "Hindi",
+    "mr": "Hindi",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "kn": "Kannada",
+    "gu": "Gujarati",
+    "bn": "Bengali",
+    "pa": "Punjabi"
+}
+
+    font_name = FONT_MAP.get(req.language, "Helvetica")
+
     styles = getSampleStyleSheet()
 
-    # Custom styles
-    title_s = ParagraphStyle("T", parent=styles["Title"],
-                             fontSize=20, spaceAfter=4,
-                             textColor=colors.HexColor("#0F172A"))
-    subtitle_s = ParagraphStyle("ST", parent=styles["Normal"],
-                                fontSize=11, spaceAfter=12,
-                                textColor=colors.HexColor("#475569"))
-    head_s = ParagraphStyle("H", parent=styles["Heading2"],
-                            fontSize=13, spaceBefore=14, spaceAfter=6,
-                            textColor=colors.HexColor("#1D4ED8"))
-    body_s = ParagraphStyle("B", parent=styles["Normal"],
-                            fontSize=10, leading=15,
-                            textColor=colors.HexColor("#1E293B"))
-    opinion_s = ParagraphStyle("OP", parent=styles["Normal"],
-                               fontSize=10, leading=16,
-                               textColor=colors.HexColor("#1E293B"),
-                               backColor=colors.HexColor("#EEF2FF"),
-                               leftIndent=12, rightIndent=12,
-                               spaceBefore=4, spaceAfter=4,
-                               borderPad=8)
-    warn_s = ParagraphStyle("W", parent=body_s,
-                            textColor=colors.HexColor("#DC2626"))
-    flag_s = ParagraphStyle("F", parent=body_s,
-                            textColor=colors.HexColor("#92400E"),
-                            leftIndent=12)
-    miss_s = ParagraphStyle("M", parent=body_s,
-                            textColor=colors.HexColor("#5B21B6"),
-                            leftIndent=12)
-    foot_s = ParagraphStyle("FT", parent=styles["Normal"],
-                            fontSize=8, textColor=colors.HexColor("#94A3B8"))
+    # ─────────────────────────────────────────────────────────────
+    # Custom Styles
+    # ─────────────────────────────────────────────────────────────
+
+    title_s = ParagraphStyle(
+        "T",
+        parent=styles["Title"],
+        fontName=font_name,
+        fontSize=20,
+        spaceAfter=4,
+        textColor=colors.HexColor("#0F172A"),
+    )
+
+    subtitle_s = ParagraphStyle(
+        "ST",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=11,
+        spaceAfter=12,
+        textColor=colors.HexColor("#475569"),
+    )
+
+    head_s = ParagraphStyle(
+        "H",
+        parent=styles["Heading2"],
+        fontName=font_name,
+        fontSize=13,
+        spaceBefore=14,
+        spaceAfter=6,
+        textColor=colors.HexColor("#1D4ED8"),
+    )
+
+    body_s = ParagraphStyle(
+        "B",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=10,
+        leading=15,
+        textColor=colors.HexColor("#1E293B"),
+    )
+
+    opinion_s = ParagraphStyle(
+        "OP",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=10,
+        leading=16,
+        textColor=colors.HexColor("#1E293B"),
+        backColor=colors.HexColor("#EEF2FF"),
+        leftIndent=12,
+        rightIndent=12,
+        spaceBefore=4,
+        spaceAfter=4,
+        borderPad=8,
+    )
+
+    warn_s = ParagraphStyle(
+        "W",
+        parent=body_s,
+        fontName=font_name,
+        textColor=colors.HexColor("#DC2626"),
+    )
+
+    flag_s = ParagraphStyle(
+        "F",
+        parent=body_s,
+        fontName=font_name,
+        textColor=colors.HexColor("#92400E"),
+        leftIndent=12,
+    )
+
+    miss_s = ParagraphStyle(
+        "M",
+        parent=body_s,
+        fontName=font_name,
+        textColor=colors.HexColor("#5B21B6"),
+        leftIndent=12,
+    )
+
+    foot_s = ParagraphStyle(
+        "FT",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=8,
+        textColor=colors.HexColor("#94A3B8"),
+    )
 
     risk_colors = {
-        "High": colors.HexColor("#DC2626"),
-        "Medium": colors.HexColor("#D97706"),
-        "Low": colors.HexColor("#059669"),
-    }
+            "High": colors.HexColor("#DC2626"),
+            "Medium": colors.HexColor("#D97706"),
+            "Low": colors.HexColor("#059669"),
+        }
 
     story = []
 
@@ -374,135 +477,163 @@ async def generate_pdf(req: ReportRequest, _key: str = Depends(verify_key)):
     story.append(Paragraph("⚖️ AI Contract Analyzer", title_s))
     story.append(Paragraph("AI-Powered Contract Analysis Report", subtitle_s))
     story.append(HRFlowable(width="100%", thickness=1,
-                            color=colors.HexColor("#E2E8F0")))
+                                color=colors.HexColor("#E2E8F0")))
     story.append(Spacer(1, 8))
 
-    # Meta row
+        # Meta row
     lang_label = LANG_MAP.get(req.language, req.language)
     risk_clr = risk_colors.get(req.overallRisk, colors.black)
     story.append(Paragraph(
-        f"Overall Risk: <font color='#{('DC2626' if req.overallRisk == 'High' else 'D97706' if req.overallRisk == 'Medium' else '059669')}'>"
-        f"<b>{req.overallRisk}</b></font>"
-        f"  |  Language: <b>{lang_label}</b>"
-        f"  |  Total Clauses: <b>{len(req.clauses)}</b>",
-        body_s
-    ))
+            f"Overall Risk: <font color='#{('DC2626' if req.overallRisk == 'High' else 'D97706' if req.overallRisk == 'Medium' else '059669')}'>"
+            f"<b>{req.overallRisk}</b></font>"
+            f"  |  Language: <b>{lang_label}</b>"
+            f"  |  Total Clauses: <b>{len(req.clauses)}</b>",
+            body_s
+        ))
     if req.keyParties:
-        story.append(Paragraph(f"Parties: {req.keyParties}", body_s))
+            story.append(Paragraph(f"Parties: {req.keyParties}", body_s))
     story.append(Spacer(1, 12))
 
-    # ── Summary ---------------------------------------------------------------
+        # ── Summary ---------------------------------------------------------------
     story.append(Paragraph("📋 Contract Summary", head_s))
     story.append(Paragraph(req.summary, body_s))
     story.append(Spacer(1, 10))
 
-    # ── Legal Opinion ---------------------------------------------------------
+        # ── Legal Opinion ---------------------------------------------------------
     story.append(Paragraph("⚖️ Legal Opinion", head_s))
     story.append(Paragraph(req.legalOpinion, opinion_s))
     story.append(Spacer(1, 10))
 
-    # ── Pie Chart -------------------------------------------------------------
+        # ── Pie Chart -------------------------------------------------------------
     high_n = sum(1 for c in req.clauses if c.get("risk") == "High")
     med_n = sum(1 for c in req.clauses if c.get("risk") == "Medium")
     low_n = sum(1 for c in req.clauses if c.get("risk") == "Low")
 
     if high_n + med_n + low_n > 0:
-        story.append(Paragraph("📊 Risk Distribution", head_s))
-        d = Drawing(340, 180)
-        pie = Pie()
-        pie.x, pie.y = 80, 10
-        pie.width = pie.height = 150
-        seg_data = [(low_n, "Low", "#22C55E"), (med_n, "Medium", "#F59E0B"), (high_n, "High", "#EF4444")]
-        pie.data = [v for v, _, _ in seg_data if v > 0]
-        pie.labels = [l for v, l, _ in seg_data if v > 0]
-        for i, (_, _, hx) in enumerate([(v, l, h) for v, l, h in seg_data if v > 0]):
-            pie.slices[i].fillColor = colors.HexColor(hx)
-        d.add(pie)
-        story.append(d)
-        story.append(Spacer(1, 8))
+            story.append(Paragraph("📊 Risk Distribution", head_s))
+            d = Drawing(340, 180)
+            pie = Pie()
+            pie.x, pie.y = 80, 10
+            pie.width = pie.height = 150
+            seg_data = [(low_n, "Low", "#22C55E"), (med_n, "Medium", "#F59E0B"), (high_n, "High", "#EF4444")]
+            pie.data = [v for v, _, _ in seg_data if v > 0]
+            pie.labels = [l for v, l, _ in seg_data if v > 0]
+            for i, (_, _, hx) in enumerate([(v, l, h) for v, l, h in seg_data if v > 0]):
+                pie.slices[i].fillColor = colors.HexColor(hx)
+            d.add(pie)
+            story.append(d)
+            story.append(Spacer(1, 8))
 
-    # ── Red Flags -------------------------------------------------------------
+        # ── Red Flags -------------------------------------------------------------
     if req.redFlags:
-        story.append(Paragraph("🚨 Critical Red Flags", head_s))
-        for rf in req.redFlags:
-            story.append(Paragraph(f"• {rf}", flag_s))
-        story.append(Spacer(1, 10))
+            story.append(Paragraph("🚨 Critical Red Flags", head_s))
+            for rf in req.redFlags:
+                story.append(Paragraph(f"• {rf}", flag_s))
+            story.append(Spacer(1, 10))
 
-    # ── Clause Table ----------------------------------------------------------
+        # ── Clause Table ----------------------------------------------------------
     story.append(Paragraph("📄 Clause-by-Clause Legal Analysis", head_s))
     story.append(Spacer(1, 6))
 
-    table_data = [["#", "Clause", "Risk", "Simplified", "Legal Analysis", "Recommendation"]]
+    table_data = [[
+        Paragraph("#", body_s),
+        Paragraph("Clause", body_s),
+        Paragraph("Risk", body_s),
+        Paragraph("Simplified", body_s),
+        Paragraph("Legal Analysis", body_s),
+        Paragraph("Recommendation", body_s),
+    ]]
+
+ 
     for c in req.clauses:
         table_data.append([
-            str(c.get("id", "")),
-            (c.get("title", ""))[:35],
-            c.get("risk", ""),
-            (c.get("simplified", ""))[:90] + ("…" if len(c.get("simplified", "")) > 90 else ""),
-            (c.get("legalAnalysis", ""))[:110] + ("…" if len(c.get("legalAnalysis", "")) > 110 else ""),
-            (c.get("recommendation", ""))[:80] + ("…" if len(c.get("recommendation", "")) > 80 else ""),
-        ])
+         Paragraph(str(c.get("id", "")), body_s),
+         Paragraph(c.get("title", ""), body_s),
+         Paragraph(c.get("risk", ""), body_s),
+         Paragraph(c.get("simplified", ""), body_s),
+         Paragraph(c.get("legalAnalysis", ""), body_s),
+         Paragraph(c.get("recommendation", ""), body_s),
+    ])
 
     tbl = Table(
         table_data,
-        colWidths=[0.3 * inch, 1.2 * inch, 0.6 * inch, 1.5 * inch, 1.8 * inch, 1.3 * inch]
+        colWidths=[
+            0.3 * inch,
+            1.2 * inch,
+            0.6 * inch,
+            1.5 * inch,
+            1.8 * inch,
+            1.3 * inch,
+        ],
     )
+
+    header_font = "Helvetica-Bold" if font_name == "Helvetica" else font_name
+
     tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1D4ED8")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+
+        ("FONTNAME", (0, 0), (-1, 0), header_font),
+        ("FONTNAME", (0, 1), (-1, -1), font_name),
+
         ("FONTSIZE", (0, 0), (-1, 0), 9),
         ("FONTSIZE", (0, 1), (-1, -1), 7.5),
+
         ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-         [colors.white, colors.HexColor("#F8FAFC")]),
+            [colors.white, colors.HexColor("#F8FAFC")]),
+
         ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#E2E8F0")),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
+
         ("TOPPADDING", (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ("LEFTPADDING", (0, 0), (-1, -1), 4),
     ]))
+
     # Colour risk column
     for row_i, c in enumerate(req.clauses, start=1):
         clr = risk_colors.get(c.get("risk", "Low"), colors.black)
         tbl.setStyle(TableStyle([
             ("TEXTCOLOR", (2, row_i), (2, row_i), clr),
-            ("FONTNAME", (2, row_i), (2, row_i), "Helvetica-Bold"),
+            ("FONTNAME", (0, row_i), (-1, row_i), header_font),
         ]))
 
     story.append(tbl)
     story.append(Spacer(1, 14))
 
-    # ── Recommendations -------------------------------------------------------
+        # ── Recommendations -------------------------------------------------------
     if req.recommendations:
-        story.append(Paragraph("✅ Recommendations", head_s))
-        for i, r in enumerate(req.recommendations, 1):
-            story.append(Paragraph(f"{i}. {r}", body_s))
-        story.append(Spacer(1, 10))
+            story.append(Paragraph("✅ Recommendations", head_s))
+            for i, r in enumerate(req.recommendations, 1):
+                story.append(Paragraph(f"{i}. {r}", body_s))
+            story.append(Spacer(1, 10))
 
-    # ── Missing Clauses -------------------------------------------------------
+        # ── Missing Clauses -------------------------------------------------------
     if req.missingClauses:
-        story.append(Paragraph("🧩 Missing Protective Clauses", head_s))
-        for clause in req.missingClauses:
-            story.append(Paragraph(f"• {clause}", miss_s))
-        story.append(Spacer(1, 10))
+            story.append(Paragraph("🧩 Missing Protective Clauses", head_s))
+            for clause in req.missingClauses:
+                story.append(Paragraph(f"• {clause}", miss_s))
+            story.append(Spacer(1, 10))
 
-    # ── Footer ----------------------------------------------------------------
+        # ── Footer ----------------------------------------------------------------
     story.append(HRFlowable(width="100%", thickness=0.5,
-                            color=colors.HexColor("#E2E8F0")))
+                                color=colors.HexColor("#E2E8F0")))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
-        "Generated by AI Contract Analyzer  |  Powered by Gemini 2.0 Flash  |  "
-        "Privacy-First: PII was masked before AI processing — your real data was never exposed to AI.",
-        foot_s
-    ))
+            "Generated by AI Contract Analyzer  |  Powered by Gemini 2.5 Flash  |  "
+            "Privacy-First: PII was masked before AI processing — your real data was never exposed to AI.",
+            foot_s
+        ))
 
     doc.build(story)
     buffer.seek(0)
     return StreamingResponse(
-        buffer,
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=ai-contract-analyzer-report.pdf"},
-    )
+            buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=ai-contract-analyzer-report.pdf"
+            },
+        )
 
 
 # ── Run directly --------------------------------------------------------------
