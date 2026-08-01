@@ -1,4 +1,4 @@
-⚖️ Legal Ease – Privacy-First AI Contract Analyzer
+#⚖️ Legal Ease – Privacy-First AI Contract Analyzer
 
 Legal Ease is an AI-powered contract analysis platform that simplifies complex legal agreements into clear, actionable insights while keeping user privacy at the core. Unlike traditional AI document analyzers, all Personally Identifiable Information (PII) is masked directly in the browser before any content is sent to the AI, ensuring sensitive information never leaves the user's device.
 
