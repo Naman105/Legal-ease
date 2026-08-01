@@ -13,7 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 const API_BASE =
   window.location.hostname === "localhost"
     ? "http://127.0.0.1:8000"
-    : "https://legal-ease-z4w9.onrender.com";
+    : "https://legal-ease-1kwj.onrender.com/";
 const API_KEY  = "legal-ease-secret-123";
 const HEADERS  = { "X-API-Key": API_KEY };
 
