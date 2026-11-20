@@ -26,11 +26,12 @@ const LANGUAGES = [
   { code: "gu", label: "ગુજરાતી",  name: "Gujarati", flag: "🇮🇳" },
   { code: "bn", label: "বাংলা",    name: "Bengali",  flag: "🇮🇳" },
   { code: "pa", label: "ਪੰਜਾਬੀ",  name: "Punjabi",  flag: "🇮🇳" },
+  { code: "en", label: "English", name: "English", flag: "🇬🇧" },
 ];
 
 const LANG_BCP47 = {
   hi:"hi-IN", ta:"ta-IN", te:"te-IN", mr:"mr-IN",
-  kn:"kn-IN", gu:"gu-IN", bn:"bn-IN", pa:"pa-IN",
+  kn:"kn-IN", gu:"gu-IN", bn:"bn-IN", pa:"pa-IN", en:"en-IN",
 };
 
 const RISK_CFG = {
@@ -439,7 +440,6 @@ const GLOBAL_CSS = `
   .pill-low { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); color:#4ade80; border-radius:999px; padding:3px 12px; font-size:11px; font-weight:700; }
 
 /* ===== LEGAL EASE NAVY THEME ===== */
-
 body {
   background: #080F1E !important;
   color: #F8FAFC;
@@ -779,6 +779,19 @@ export default function LegalEase() {
     reader.readAsText(file);
   }, []);
 
+<nav className="nav-glass above-mesh">
+  <div className="logo-text">⚖ Legal-Ease</div>
+
+  <div className="nav-badges">
+    <span className="badge">🔒 Smart Masking</span>
+    <span className="badge">⚖️ AI Analysis</span>
+    <span className="badge">🔊 Voice Output</span>
+  </div>
+
+  <button className="btn-primary" onClick={() => setScreen("upload")}>
+    Get Started →
+  </button>
+</nav>
   const handleDrop = useCallback((e) => {
     e.preventDefault(); setDragOver(false);
     const f = e.dataTransfer.files[0]; if (f) handleFile(f);
