@@ -437,6 +437,82 @@ const GLOBAL_CSS = `
   .pill-high { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:999px; padding:3px 12px; font-size:11px; font-weight:700; }
   .pill-medium { background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); color:#fbbf24; border-radius:999px; padding:3px 12px; font-size:11px; font-weight:700; }
   .pill-low { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); color:#4ade80; border-radius:999px; padding:3px 12px; font-size:11px; font-weight:700; }
+
+/* ===== LEGAL EASE NAVY THEME ===== */
+
+body {
+  background: #080F1E !important;
+  color: #F8FAFC;
+}
+
+.mesh-bg {
+  background: #080F1E !important;
+}
+
+.mesh-bg::before {
+  background:
+    radial-gradient(ellipse 70% 60% at 15% 10%, rgba(37,99,235,0.30), transparent 60%),
+    radial-gradient(ellipse 60% 55% at 85% 15%, rgba(14,116,144,0.18), transparent 60%),
+    radial-gradient(ellipse 65% 55% at 50% 90%, rgba(30,64,175,0.20), transparent 60%) !important;
+}
+
+.nav-glass {
+  background: rgba(8,15,30,0.96) !important;
+  border-bottom: 1px solid rgba(96,165,250,0.22) !important;
+  box-shadow: 0 4px 25px rgba(0,0,0,0.3) !important;
+  gap: 12px;
+}
+
+.logo-text {
+  color: #FFFFFF !important;
+  font-size: 22px !important;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.nav-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-badges .badge {
+  background: rgba(37,99,235,0.15) !important;
+  border: 1px solid rgba(96,165,250,0.30);
+  color: #BFDBFE !important;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.purple-text {
+  background: linear-gradient(90deg,#60A5FA,#22D3EE) !important;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: none !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg,#1D4ED8,#2563EB) !important;
+  box-shadow: 0 4px 20px rgba(37,99,235,0.25) !important;
+  animation: none !important;
+}
+
+@media(max-width:700px) {
+  .nav-glass {
+    height: auto;
+    min-height: 64px;
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+
+  .nav-badges {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+} 
 `;
 
 // ── Masker ────────────────────────────────────────────────────────────────────
@@ -779,16 +855,20 @@ export default function LegalEase() {
     <div className="mesh-bg" style={{ minHeight:"100vh", color:"white" }}>
       <style>{GLOBAL_CSS}</style>
       <Stars />
-      <nav className="nav-glass above-mesh">
-        <div className="logo-text">⚖️ AI Contract Analyzer</div>
-        <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
-          <span className="badge">🛡️ Privacy-First</span>
-          <span className="badge">🔒 Smart Masking</span>
-          <span className="badge">⚖️ Lawyer-Grade AI</span>
-          <span className="badge">🔊 Voice Output</span>
-        </div>
-        <button className="btn-primary" onClick={() => setScreen("upload")}>Get Started →</button>
-      </nav>
+      
+<nav className="nav-glass above-mesh">
+  <div className="logo-text">⚖ Legal-Ease</div>
+
+  <div className="nav-badges">
+    <span className="badge">🔒 Smart Masking</span>
+    <span className="badge">⚖️ AI Analysis</span>
+    <span className="badge">🔊 Voice Output</span>
+  </div>
+
+  <button className="btn-primary" onClick={() => setScreen("upload")}>
+    Get Started →
+  </button>
+</nav>
 
       <div className="above-mesh" style={{ maxWidth:"1100px", margin:"0 auto", padding:"5rem 2rem" }}>
 
