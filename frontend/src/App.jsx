@@ -10,11 +10,8 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-const API_BASE =
-  window.location.hostname === "localhost"
-    ? "http://127.0.0.1:8000"
-    : "https:https://legal-ease-backend-swsy.onrender.com";
-const API_KEY  = "legal-ease-secret-123";
+const API_BASE = "https://legal-ease-backend-swsy.onrender.com";
+const API_KEY  = "Legal-ease-246";
 const HEADERS  = { "X-API-Key": API_KEY };
 
 const LANGUAGES = [
