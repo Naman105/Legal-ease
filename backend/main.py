@@ -24,6 +24,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 # ── Environment ---------------------------------------------------------------
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL" "gemini-3.8-flash").strip()
 SECRET_API_KEY = os.getenv("SECRET_API_KEY", "").strip()
 
 print("GEMINI_API_KEY length:", len(GEMINI_API_KEY))
