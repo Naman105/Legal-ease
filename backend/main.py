@@ -16,7 +16,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.piecharts import Pie
-import io, json, os
+import io, json, os, time 
 from google import genai
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
