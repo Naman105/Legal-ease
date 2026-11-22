@@ -137,7 +137,7 @@ def call_gemini(prompt: str, temperature: float = 0.2) -> str:
         print("Client created successfully")
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=prompt
         )
 
@@ -171,7 +171,7 @@ def root():
         "service": "AI Contract Analyzer API",
         "status": "running",
         "gemini_configured": bool(GEMINI_API_KEY),
-        "gemini_model": "gemini-2.5-flash",
+        "gemini_model": "gemini-3.8-flash",
         "note": "Frontend handles all PII masking. Backend does AI analysis only."
     }
 
