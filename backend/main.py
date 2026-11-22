@@ -136,10 +136,21 @@ def call_gemini(prompt: str, temperature: float = 0.2) -> str:
 
         print("Client created successfully")
 
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=prompt
-        )
+                response = None
+        for wait in [0, 3, 6, 12, 20]:
+            time.sleep(wait)
+            try:
+                response = client.models.generate_content(
+                    model="gemini-3.8-flash",
+                    contents=prompt
+                )
+                break
+            except Exception as err:
+                if "503" in str(err) or "UNAVAILABLE" in str(err):
+                    continue
+                raise
+        if response is None:
+            raise Exception("Gemini is very busy right now. Please try again in a minute.")
 
         print("Gemini response received")
 
