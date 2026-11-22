@@ -1,4 +1,3 @@
-
 from annotated_types import doc
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -137,7 +136,7 @@ def call_gemini(prompt: str, temperature: float = 0.2) -> str:
 
         print("Client created successfully")
 
-                response = None
+        response = None
         for wait in [0, 3, 6, 12, 20]:
             time.sleep(wait)
             try:
